@@ -14,3 +14,16 @@ This class checks and calculates different types of data like numbers, formulas,
 It looks for valid expressions and computes results using basic operations like add, subtract, multiply, and divide.
 It also handles special functions like finding the minimum, maximum, sum, and average of cell ranges.
 #### Index2D.java:
+The class checks and calculates formulas, functions, and conditions in a spreadsheet.
+It makes sure they are written correctly and finds their values when needed.
+#### sheet.java:
+This class represents a spreadsheet that stores and manages a 2D table of cells.
+It allows setting and getting values, calculating cell values, tracking dependencies, and saving or loading data from a file.
+#### Scell:
+The class represents a cell that stores data as text and sorts it into types like 
+text, number, formula, or function. It also keeps track of the cell's order and type.
+#### Range2D:
+The class represents a range of cells from a starting cell to an ending cell.
+It can return all the cell names in that range.
+
+
