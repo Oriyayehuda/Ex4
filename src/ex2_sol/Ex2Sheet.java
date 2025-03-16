@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class Ex2Sheet implements Sheet {
     private Cell[][] table;
-    private Double[][] data;
+    private Object[][] data;
 
     public Ex2Sheet(int x, int y) {
         table = new SCell[x][y];
@@ -39,11 +39,17 @@ public class Ex2Sheet implements Sheet {
             c.setOrder(-1);
         } // BUG 345
         //  if(t==Ex2Utils.ERR_CYCLE_FORM) {ans = "ERR_CYCLE!";}
-        if (t == Ex2Utils.NUMBER || t == Ex2Utils.FORM) {
+        if (t == Ex2Utils.NUMBER || t == Ex2Utils.FORM || t == Ex2Utils.FUNC || t == Ex2Utils.IF) {
             ans = "" + data[x][y];
         }
         if (t == Ex2Utils.ERR_FORM_FORMAT) {
             ans = Ex2Utils.ERR_FORM;
+        }
+        if (t == Ex2Utils.IF_ERR_FORMAT) {
+            ans = Ex2Utils.ERR_IF;
+        }
+        if (t == Ex2Utils.FUNC_ERR_FORMAT) {
+            ans = Ex2Utils.ERR_FUNC;
         }
         return ans;
     }
@@ -51,14 +57,14 @@ public class Ex2Sheet implements Sheet {
     @Override
     public Cell get(int x, int y) {
         return table[x][y];
-    }
+    } // מחזיר את התא שנמצא במיקום
 
     @Override
     public Cell get(String cords) {
-        Cell ans = null;
-        Index2D c = new CellEntry(cords);
-        int x = c.getX(), y= c.getY();
-        if(isIn(x,y)) {ans = table[x][y];}
+        Cell ans = null; //אתחול משתנה שיחזיק את התא שנמצא
+        Index2D c = new CellEntry(cords); //ממיר לקורדיננטות מספריות
+        int x = c.getX(), y= c.getY();  //מקבל את הערכים מהאובייקט החדש
+        if(isIn(x,y)) {ans = table[x][y];} //בודק אם קורדיננטה תקינה אם כן מחזיר התא
         return ans;
 
     }
@@ -66,15 +72,15 @@ public class Ex2Sheet implements Sheet {
     @Override
     public int width() {
         return table.length;
-    }
+    } //רוחב הגיליון מס עמודות
     @Override
     public int height() {
         return table[0].length;
-    }
+    } //גובה הגיליון מספר שורות
     @Override
     public void set(int x, int y, String s) {
-        Cell c = new SCell(s);
-        table[x][y] = c;
+        Cell c = new SCell(s); //יוצר אובייקט חדש עם הערך שמתקבל
+        table[x][y] = c; //שומר את התא
       //  eval();
     }
 
@@ -82,19 +88,31 @@ public class Ex2Sheet implements Sheet {
 
     @Override
     public void eval() {
-        int[][] dd = depth();
-        data = new Double[width()][height()];
+        int[][] dd = depth(); //מחשב את סדר ההערכה של התאים
+        data = new Object[width()][height()]; //מאתחל מחדש את מערך הנתונים
         for (int x = 0; x < width(); x = x + 1) {
             for (int y = 0; y < height(); y = y + 1) {
                 Cell c = table[x][y];
               if (dd[x][y] != -1 && c!=null && (c.getType()!= Ex2Utils.TEXT)) {
-                    String res = eval(x, y);
-                    Double d = getDouble(res);
-                    if(d==null) {
-                        c.setType(Ex2Utils.ERR_FORM_FORMAT);
+                    String res = eval(x, y); //מחשב את הערך
+                    Double d = getDouble(res); //ממיר תוצאה למס
+                    if(d==null && res == null) { //'if' can return string so res can be string also
+                        if (c.getType() == Ex2Utils.FUNC) { //אם הסוג הוא פונקציה אז השגיאה נעשית שם
+                            c.setType(Ex2Utils.FUNC_ERR_FORMAT);
+                        } else if (c.getType() == Ex2Utils.IF) { //אם הסוג הוא תנאי והשגיאה נעשית שם
+                            c.setType(Ex2Utils.IF_ERR_FORMAT);
+                        } else if (c.getType() != Ex2Utils.FUNC_ERR_FORMAT && c.getType() != Ex2Utils.IF_ERR_FORMAT) { //אם לא נעשה לא בפונקציה ולא בתנאי
+                            c.setType(Ex2Utils.ERR_FORM_FORMAT); //להחזיר פורמט שגיאה על נוסחה כללית
+                        }
                     }
                     else {
-                        data[x][y] = d;
+                        if (d != null) {
+                            data[x][y] = d;
+                        }
+                        else {
+                            data[x][y] = res;
+                        }
+
                     }
                 }
                 if (dd[x][y] == -1 ) {
@@ -106,30 +124,30 @@ public class Ex2Sheet implements Sheet {
 
     @Override
     public boolean isIn(int xx, int yy) {
-        boolean ans = true;
-        if(xx<0 |yy<0 | xx>=width() | yy>=height()) {ans = false;}
+        boolean ans = true; //הנחה שהקורדינטה תקינה
+        if(xx<0 |yy<0 | xx>=width() | yy>=height()) {ans = false;} //בדיקה אם הערכים מחוץ לגבולות ואם כן מחזירים לא נכון
         return ans;
     }
 
     @Override
-    public int[][] depth() {
-        int[][] ans = new int[width()][height()];
-        for (int x = 0; x < width(); x = x + 1) {
-            for (int y = 0; y < height(); y = y + 1) {
-                Cell c = this.get(x, y);
-                int t = c.getType();
+    public int[][] depth() { //מחשב עומק
+        int[][] ans = new int[width()][height()]; //יצירת מערך דו מימדי של שורות ועמודות
+        for (int x = 0; x < width(); x = x + 1) { //עוברת על כל התאים
+            for (int y = 0; y < height(); y = y + 1) { //בדיקה אם הערך קטן מהגובה ואם כן מוסיף 1
+                Cell c = this.get(x, y); //מחזיר את התא במיקום של הערכים
+                int t = c.getType(); //מחזיר את סוג התא
                 if(Ex2Utils.TEXT!=t) {
-                    ans[x][y] = -1;
+                    ans[x][y] = -1; //אם לא טקסט מחזירים -1 כי נצרך לחשב את ערכו
                 }
             }
         }
-        int count = 0, all = width()*height();
+        int count = 0, all = width()*height(); //סופר כמה תאים חושבו
         boolean changed = true;
         while (changed && count<all) {
-            changed = false;
-            for (int x = 0; x < width(); x = x + 1) {
+            changed = false; //מציין אם היה שינוי במחזור האחרון של החישוב
+            for (int x = 0; x < width(); x = x + 1) { //עוברת כל תאי הגיליון
                 for (int y = 0; y < height(); y = y + 1) {
-                    if(ans[x][y]==-1) {
+                    if(ans[x][y]==-1) { //אם לא חושב מחזיר -1
                         Cell c = this.get(x, y);
                      //   ArrayList<Coord> deps = allCells(c.toString());
                         ArrayList<Index2D> deps = allCells(c.getData());
@@ -159,12 +177,12 @@ public class Ex2Sheet implements Sheet {
             while (myReader.hasNextLine()) {
                 s0 = myReader.nextLine();
                 String[] s1 = s0.split(",");
-               try {
+               try { //עלול לגרום לשגיאה
                    int x = Ex2Sheet.getInteger(s1[0]);
                    int y = Ex2Sheet.getInteger(s1[1]);
                    sp.set(x,y,s1[2]);
                }
-               catch (Exception e) {
+               catch (Exception e) { //קוד שירוץ במקרה של השגיאה
                     e.printStackTrace();
                     System.err.println("Line: "+data+" is in the wrong format (should be x,y,cellData)");
                }
@@ -225,6 +243,37 @@ public class Ex2Sheet implements Sheet {
             }
             else {data[x][y] = null;}
         }
+        if (type == Ex2Utils.FUNC | type == Ex2Utils.FUNC_ERR_FORMAT) {
+            line = line.substring(1); // removing the first "="
+            if (isFunction(line)) {
+                Double dd = computeFunction(x,y);
+                data[x][y] = dd;
+                if(dd==null) {
+                    c.setType(Ex2Utils.FUNC_ERR_FORMAT);
+                }
+                else {c.setType(Ex2Utils.FUNC);}
+            }
+            else {data[x][y] = null;}
+        }
+        if (type == Ex2Utils.IF | type == Ex2Utils.IF_ERR_FORMAT) {
+            line = line.substring(1); // removing the first "="
+            if (isIfCondition(line)) {
+                Object dd = computeIfCondition(x,y);
+                if (dd instanceof Double doubleVal) {
+                    data[x][y] = doubleVal;
+                }
+                else if (dd instanceof String strVal) {
+                    data[x][y] = null;
+                    return strVal;
+                }
+                if(dd==null) {
+                    c.setType(Ex2Utils.IF_ERR_FORMAT);
+                }
+                else {c.setType(Ex2Utils.IF);}
+            }
+            else {data[x][y] = null;}
+        }
+
         String ans = null;
         if(data[x][y]!=null) {ans = data[x][y].toString();}
         return ans;
@@ -261,12 +310,29 @@ public class Ex2Sheet implements Sheet {
     public int checkType(String line) {
         line = removeSpaces(line);
         int ans = Ex2Utils.TEXT;
-        double d = getDouble(line);
-        if(d>Double.MIN_VALUE) {ans= Ex2Utils.NUMBER;}
+        Double d = getDouble(line);
+        if(d != null && d>Double.MIN_VALUE) {ans= Ex2Utils.NUMBER;}
         else {
-            if(line.charAt(0)=='=') {
+            boolean isFunc = false;
+            for (String func : Ex2Utils.M_FUNC) {
+                String start = "=" + func;
+                if (line.startsWith(start)) {
+                    isFunc = true;
+                    break;
+                }
+            }
+            if (isFunc) {
+                ans = Ex2Utils.FUNC_ERR_FORMAT;
+                String s = line.substring(1);
+                if(isFunction(s)) {ans = Ex2Utils.FUNC;}
+            }
+            else if (line.startsWith("=if")) {
+                ans = Ex2Utils.IF_ERR_FORMAT;
+                String s = line.substring(1);
+                if(isIfCondition(s)) {ans = Ex2Utils.IF;}
+            }
+            else if(line.charAt(0)=='=') {
                 ans = Ex2Utils.ERR_FORM_FORMAT;
-                int type = -1;
                 String s = line.substring(1);
                 if(isForm(s)) {ans = Ex2Utils.FORM;}
             }
@@ -296,36 +362,97 @@ public class Ex2Sheet implements Sheet {
     }
     private boolean isFormP(String form) {
         boolean ans = false;
-        while(canRemoveB(form)) {
+        while (canRemoveB(form)) {
             form = removeB(form);
         }
         Index2D c = new CellEntry(form);
-        if(isIn(c.getX(), c.getY())) {ans = true;}
-        else{
-            if(isNumber(form)){ans = true;}
-            else {
+        if (isIn(c.getX(), c.getY())) {
+            ans = true;
+        } else {
+            if (isNumber(form)) {
+                ans = true;
+            } else {
                 int ind = findLastOp(form);// bug
-                if(ind==0) {  // the case of -1, or -(1+1)
+                if (ind == 0) {  // the case of -1, or -(1+1)
                     char c1 = form.charAt(0);
-                    if(c1=='-' | c1=='+') {
-                        ans = isFormP(form.substring(1));}
-                    else {ans = false;}
-                }
-                else if (ind != -1) { // (1+(1+2)) 2/2
+                    if (c1 == '-' | c1 == '+') {
+                        ans = isFormP(form.substring(1));
+                    } else {
+                        ans = false;
+                    }
+                } else if (ind != -1) { // (1+(1+2)) 2/2
                     String f1 = form.substring(0, ind);
                     String f2 = form.substring(ind + 1);
                     ans = isFormP(f1) && isFormP(f2);
                 }
-                else {
-                    ind = op(form, Ex2Utils.FUNC, 0);
-                    if (ind != -1) {
-                        String str = form.substring(Ex2Utils.FUNC[ind].length());
-                        ind = str.indexOf(":");
-                        if (str.indexOf("(") == 0 && str.indexOf(")") == str.length()-1 &&
-                                ind != -1) {
-                            String f1 = str.substring(1, ind);
-                            String f2 = str.substring(ind + 1, str.length()-1);
-                            ans = isFormP(f1) && isFormP(f2);
+            }
+        }
+        return ans;
+    }
+
+    private boolean isConditionValue(String cond) {
+        cond = removeSpaces(cond);
+        return isIfCondition(cond) || isFunction(cond) || isForm(cond);
+    }
+
+    private boolean isFunction(String func) {
+        boolean ans = false;
+        while (canRemoveB(func)) {
+            func = removeB(func);
+        }
+        Index2D c = new CellEntry(func);
+        if (isIn(c.getX(), c.getY())) {
+            ans = true;
+        } else {
+            int ind = op(func, Ex2Utils.M_FUNC, 0);
+            if (ind != -1) {
+                String str = func.substring(Ex2Utils.M_FUNC[ind].length());
+                ind = str.indexOf(":");
+                if (str.indexOf("(") == 0 && str.indexOf(")") == str.length() - 1 &&
+                        ind != -1) {
+                    String f1 = str.substring(1, ind);
+                    String f2 = str.substring(ind + 1, str.length() - 1);
+                    ans = isFormP(f1) && isFormP(f2);
+                }
+            }
+        }
+        return ans;
+    }
+
+    private boolean isIfCondition(String ifCondition) {
+        boolean ans = false;
+        while (canRemoveB(ifCondition)) {
+            ifCondition = removeB(ifCondition);
+        }
+        Index2D c = new CellEntry(ifCondition);
+        if (isIn(c.getX(), c.getY())) {
+            ans = true;
+        } else {
+            int ind = ifCondition.indexOf(Ex2Utils.IF_TEXT);
+            if (ind == 0) {
+                String str = ifCondition.substring(Ex2Utils.IF_TEXT.length());
+                if (str.startsWith("(") && str.endsWith(")")) {
+                    str = str.substring(1, str.length() -1);
+                    int firstIndex = str.indexOf(",");
+                    int lastIndex = str.lastIndexOf(",");
+                    if (firstIndex != lastIndex && lastIndex != str.length() -1 && firstIndex != 0) {
+                        String firstStr = str.substring(0, firstIndex);
+                        String secondStr = str.substring(firstIndex + 1, lastIndex);
+                        String thirdStr = str.substring(lastIndex + 1);
+                        ind = -1;
+                        for(int i=1;i<firstStr.length() -1;i++) {
+                            ind = op(firstStr, Ex2Utils.M_CONDITIONS, i);
+                            if(ind!=-1){
+                                break;
+                            }
+                        }
+                        if (ind != -1) {
+                            String[] subCondition = firstStr.split(Ex2Utils.M_CONDITIONS[ind]);
+                            boolean isCondition = false;
+                            if (subCondition.length == 2) {
+                                isCondition = isForm(subCondition[0]) && isForm(subCondition[1]);
+                            }
+                            ans = isCondition && checkType(secondStr) > 0  && checkType(thirdStr) > 0;
                         }
                     }
                 }
@@ -333,6 +460,7 @@ public class Ex2Sheet implements Sheet {
         }
         return ans;
     }
+
     public static ArrayList<Index2D> allCells(String line) {
         ArrayList<Index2D> ans = new ArrayList<Index2D>();
         int i=0;
@@ -356,33 +484,35 @@ public class Ex2Sheet implements Sheet {
 
     private Double computeFormP(String form) {
         Double ans = null;
-        while(canRemoveB(form)) {
+        while (canRemoveB(form)) {
             form = removeB(form);
         }
         CellEntry c = new CellEntry(form);
-        if(c.isValid()) {
+        if (c.isValid()) {
 
             return getDouble(eval(c.getX(), c.getY()));
-        }
-        else{
-            if(isNumber(form)){ans = getDouble(form);}
-            else {
+        } else {
+            if (isNumber(form)) {
+                ans = getDouble(form);
+            } else {
                 int ind = findLastOp(form);
                 if (ind != -1) {
-                    int opInd = opCode(form.substring(ind,ind+1));
-                    if(ind == 0) {  // the case of -1, or -(1+1)
+                    int opInd = opCode(form.substring(ind, ind + 1));
+                    if (ind == 0) {  // the case of -1, or -(1+1)
                         double d = 1;
-                        if(opInd==1) { d=-1;}
-                        ans = d*computeFormP(form.substring(1));
-                    }
-                    else {
+                        if (opInd == 1) {
+                            d = -1;
+                        }
+                        ans = d * computeFormP(form.substring(1));
+                    } else {
                         String f1 = form.substring(0, ind);
                         String f2 = form.substring(ind + 1);
 
                         Double a1 = computeFormP(f1);
                         Double a2 = computeFormP(f2);
-                        if(a1==null || a2 == null) {ans=null;}
-                        else {
+                        if (a1 == null || a2 == null) {
+                            ans = null;
+                        } else {
                             if (opInd == 0) {
                                 ans = a1 + a2;
                             }
@@ -398,48 +528,192 @@ public class Ex2Sheet implements Sheet {
                         }
                     }
                 }
-                else {
-                    ind = op(form, Ex2Utils.FUNC, 0);
-                    String func = Ex2Utils.FUNC[ind];
-                    if (ind != -1) {
-                        String str = form.substring(func.length());
-                        int rangeIndex = str.indexOf(":");
-                        if (str.indexOf("(") == 0 && str.indexOf(")") == str.length()-1 &&
-                                rangeIndex != -1) {
-                            CellEntry f1 = new CellEntry(str.substring(1, rangeIndex));
-                            CellEntry f2 = new CellEntry(str.substring(rangeIndex + 1, str.length()-1));
-                            Range2D range = new Range2D(f1, f2);
-                            ArrayList<String> allCells = range.getAllCells();
-                            ArrayList<Double> results = new ArrayList<>();
-                            for (String allCell : allCells) {
-                                Double res = computeFormP(allCell);
-                                if (res == null) {
-                                    return ans;
-                                }
-                                results.add(res);
-                            }
-                            if (ind == 0) {
-                                ans = Collections.min(results);
-                            }
-                            else if (ind == 1) {
-                                ans = Collections.max(results);
-                            }
-                            else if (ind == 2) {
-                                for (Double res : results) {
-                                    if (ans == null) {
-                                        ans = (double)0;
-                                    }
-                                    ans = ans + res;
-                                }
-                            }
-                            else if (ind == 3) {
-                                double sum = 0;
-                                for (Double res : results) {
-                                    sum = sum + res;
-                                }
-                                ans = sum / results.size();
-                            }
+            }
+        }
+        return ans;
+    }
 
+    private Double computeFunction(int x, int y) {
+        Double ans = null;
+        String func = table[x][y].getData();
+        func = func.substring(1);// remove the "="
+        if(isFunction(func)) {
+            func = removeSpaces(func);
+            ans = computeFunctionP(func);
+        }
+        return ans;
+    }
+
+    private Object computeIfCondition(int x, int y) {
+        Object ans = null;
+        String func = table[x][y].getData();
+        func = func.substring(1);// remove the "="
+        if(isIfCondition(func)) {
+            func = removeSpaces(func);
+            ans = computeIfConditionP(func);
+        }
+        return ans;
+    }
+
+    private Double computeFunctionP(String funcStr) {
+        Double ans = null;
+        while (canRemoveB(funcStr)) {
+            funcStr = removeB(funcStr);
+        }
+        CellEntry c = new CellEntry(funcStr);
+        if (c.isValid()) {
+            return getDouble(eval(c.getX(), c.getY()));
+        } else {
+            int ind = op(funcStr, Ex2Utils.M_FUNC, 0);
+            String func = Ex2Utils.M_FUNC[ind];
+            if (ind != -1) {
+                String str = funcStr.substring(func.length());
+                int rangeIndex = str.indexOf(":");
+                if (str.indexOf("(") == 0 && str.indexOf(")") == str.length() - 1 &&
+                        rangeIndex != -1) {
+                    CellEntry f1 = new CellEntry(str.substring(1, rangeIndex));
+                    CellEntry f2 = new CellEntry(str.substring(rangeIndex + 1, str.length() - 1));
+                    Range2D range = new Range2D(f1, f2);
+                    ArrayList<String> allCells = range.getAllCells();
+                    ArrayList<Double> results = new ArrayList<>();
+                    for (String allCell : allCells) {
+                        Double res = computeFormP(allCell);
+                        if (res == null) {
+                            return ans;
+                        }
+                        results.add(res);
+                    }
+                    if (ind == 0) {
+                        ans = Collections.min(results);
+                    } else if (ind == 1) {
+                        ans = Collections.max(results);
+                    } else if (ind == 2) {
+                        for (Double res : results) {
+                            if (ans == null) {
+                                ans = (double) 0;
+                            }
+                            ans = ans + res;
+                        }
+                    } else if (ind == 3) {
+                        double sum = 0;
+                        for (Double res : results) {
+                            sum = sum + res;
+                        }
+                        ans = sum / results.size();
+                    }
+                    return ans;
+
+                }
+            }
+        }
+        return ans;
+    }
+
+    private Object getConditionValue(String line){
+        int type = checkType(line);
+        if (type == Ex2Utils.TEXT) {
+            return line;
+        }
+        if (type == Ex2Utils.NUMBER) {
+            return getDouble(line);
+        }
+        Object ans = null;
+        line = line.substring(1);
+        if (type == Ex2Utils.FORM) {
+            ans = computeFormP(line);
+        } else if (type == Ex2Utils.FUNC) {
+            ans = computeFunctionP(line);
+        } else if (type == Ex2Utils.IF) {
+            ans = computeIfConditionP(line);
+        }
+        return ans;
+    }
+
+    private Object getValue(String line) {
+        Object ans = null;
+        int type = checkType(line);
+        if (type == Ex2Utils.NUMBER) {
+            ans = getDouble(line);
+        } else if (type == Ex2Utils.FORM) {
+            ans = computeFormP(line);
+        } else if (type == Ex2Utils.FUNC) {
+            ans = computeFunctionP(line);
+        } else if (type == Ex2Utils.IF) {
+            ans = computeIfConditionP(line);
+        }
+        return ans;
+    }
+
+    private Object computeIfConditionP(String ifCondition) {
+        Object ans = null;
+        while (canRemoveB(ifCondition)) {
+            ifCondition = removeB(ifCondition);
+        }
+        CellEntry c = new CellEntry(ifCondition);
+        if (c.isValid()) {
+            return getDouble(eval(c.getX(), c.getY()));
+        } else {
+            int ind = ifCondition.indexOf(Ex2Utils.IF_TEXT);
+            if (ind == 0) {
+                String str = ifCondition.substring(Ex2Utils.IF_TEXT.length());
+                if (str.startsWith("(") && str.endsWith(")")) {
+                    str = str.substring(1, str.length() -1);
+                    int firstIndex = str.indexOf(",");
+                    int lastIndex = str.lastIndexOf(",");
+                    if (firstIndex != lastIndex && lastIndex != str.length() -1 && firstIndex != 0) {
+                        String firstStr = str.substring(0, firstIndex);
+                        String secondStr = str.substring(firstIndex + 1, lastIndex);
+                        String thirdStr = str.substring(lastIndex + 1);
+                        ind = -1;
+                        for(int i=1;i<firstStr.length() -1;i++) {
+                            ind = op(firstStr, Ex2Utils.M_CONDITIONS, i);
+                            if(ind!=-1){
+                                break;
+                            }
+                        }
+                        String[] subCondition = firstStr.split(Ex2Utils.M_CONDITIONS[ind]);
+                        if (subCondition.length == 2) {
+                            Double leftCond = computeFormP(subCondition[0]);
+                            Double rightCond = computeFormP(subCondition[1]);
+                            if (leftCond != null && rightCond != null) {
+                                if (ind == 0) {
+                                    if (leftCond < rightCond) {
+                                        ans = getConditionValue(secondStr);
+                                    } else {
+                                        ans = getConditionValue(thirdStr);
+                                    }
+                                } else if (ind == 1) {
+                                    if (leftCond > rightCond) {
+                                        ans = getConditionValue(secondStr);
+                                    } else {
+                                        ans = getConditionValue(thirdStr);
+                                    }
+                                } else if (ind == 2) {
+                                    if (leftCond.equals(rightCond)) {
+                                        ans = getConditionValue(secondStr);
+                                    } else {
+                                        ans = getConditionValue(secondStr);
+                                    }
+                                } else if (ind == 3) {
+                                    if (leftCond <= rightCond) {
+                                        ans = getConditionValue(secondStr);
+                                    } else {
+                                        ans = getConditionValue(thirdStr);
+                                    }
+                                } else if (ind == 4) {
+                                    if (leftCond >= rightCond) {
+                                        ans = getConditionValue(secondStr);
+                                    } else {
+                                        ans = getConditionValue(thirdStr);
+                                    }
+                                } else if (ind == 5) {
+                                    if (!leftCond.equals(rightCond)) {
+                                        ans = getConditionValue(secondStr);
+                                    } else {
+                                        ans = getConditionValue(thirdStr);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -447,6 +721,7 @@ public class Ex2Sheet implements Sheet {
         }
         return ans;
     }
+
     private static int opCode(String op){
         int ans =-1;
         for(int i = 0; i< Ex2Utils.M_OPS.length; i=i+1) {

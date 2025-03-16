@@ -30,6 +30,15 @@ public void setData(String s) {
         if(s.startsWith("=")) {
             type = Ex2Utils.FORM;
         }
+        if(s.startsWith("=if")) {
+            type = Ex2Utils.IF;
+        }
+        for (int i=0;i<Ex2Utils.M_FUNC.length;i++) {
+            if(s.startsWith("=" + Ex2Utils.M_FUNC[i])) {
+                type = Ex2Utils.FUNC;
+                break;
+            }
+        }
         _line = s;
     }
 }
