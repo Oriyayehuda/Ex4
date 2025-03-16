@@ -11,13 +11,13 @@ public class Range2D {
     private Index2D end;
     private ArrayList<Double> data;
 
-    public Range2D(CellEntry a, CellEntry b) { //מקבלת 2 תאים ומסדרת כך שההתחלתי יהיה השמאלי העליון והסופי הימני התחתון
+    public Range2D(CellEntry a, CellEntry b) {
         if (a == null || b == null) {
             System.out.println("ERR");
             return;
         }
-        this.start = a;//השורה תהיה הכי עליונה
-        this.end = b; //השורה תהיה הכי תחתונה
+        this.start = a;
+        this.end = b;
     }
 
     public ArrayList<String> getAllCells() {

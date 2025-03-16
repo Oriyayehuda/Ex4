@@ -339,6 +339,7 @@ public class Ex2Sheet implements Sheet {
         }
         return ans;
     }
+
     public boolean isForm(String form) {
         boolean ans = false;
         if(form!=null) {
@@ -349,50 +350,6 @@ public class Ex2Sheet implements Sheet {
             catch (Exception e) {;}
         }
         return ans;
-    }
-    private Double computeForm(int x, int y) {
-        Double ans = null;
-        String form = table[x][y].getData();
-        form = form.substring(1);// remove the "="
-        if(isForm(form)) {
-            form = removeSpaces(form);
-            ans = computeFormP(form);
-        }
-        return ans;
-    }
-    private boolean isFormP(String form) {
-        boolean ans = false;
-        while (canRemoveB(form)) {
-            form = removeB(form);
-        }
-        Index2D c = new CellEntry(form);
-        if (isIn(c.getX(), c.getY())) {
-            ans = true;
-        } else {
-            if (isNumber(form)) {
-                ans = true;
-            } else {
-                int ind = findLastOp(form);// bug
-                if (ind == 0) {  // the case of -1, or -(1+1)
-                    char c1 = form.charAt(0);
-                    if (c1 == '-' | c1 == '+') {
-                        ans = isFormP(form.substring(1));
-                    } else {
-                        ans = false;
-                    }
-                } else if (ind != -1) { // (1+(1+2)) 2/2
-                    String f1 = form.substring(0, ind);
-                    String f2 = form.substring(ind + 1);
-                    ans = isFormP(f1) && isFormP(f2);
-                }
-            }
-        }
-        return ans;
-    }
-
-    private boolean isConditionValue(String cond) {
-        cond = removeSpaces(cond);
-        return isIfCondition(cond) || isFunction(cond) || isForm(cond);
     }
 
     private boolean isFunction(String func) {
@@ -461,6 +418,43 @@ public class Ex2Sheet implements Sheet {
         return ans;
     }
 
+    private boolean isFormP(String form) {
+        boolean ans = false;
+        while (canRemoveB(form)) {
+            form = removeB(form);
+        }
+        Index2D c = new CellEntry(form);
+        if (isIn(c.getX(), c.getY())) {
+            ans = true;
+        } else {
+            if (isNumber(form)) {
+                ans = true;
+            } else {
+                int ind = findLastOp(form);// bug
+                if (ind == 0) {  // the case of -1, or -(1+1)
+                    char c1 = form.charAt(0);
+                    if (c1 == '-' | c1 == '+') {
+                        ans = isFormP(form.substring(1));
+                    } else {
+                        ans = false;
+                    }
+                } else if (ind != -1) { // (1+(1+2)) 2/2
+                    String f1 = form.substring(0, ind);
+                    String f2 = form.substring(ind + 1);
+                    ans = isFormP(f1) && isFormP(f2);
+                }
+            }
+        }
+        return ans;
+    }
+
+    private boolean isConditionValue(String cond) {
+        cond = removeSpaces(cond);
+        return isIfCondition(cond) || isFunction(cond) || isForm(cond);
+    }
+
+
+
     public static ArrayList<Index2D> allCells(String line) {
         ArrayList<Index2D> ans = new ArrayList<Index2D>();
         int i=0;
@@ -478,6 +472,40 @@ public class Ex2Sheet implements Sheet {
                 else {i=i+1;}
             }
 
+        }
+        return ans;
+    }
+
+
+    private Double computeForm(int x, int y) {
+        Double ans = null;
+        String form = table[x][y].getData();
+        form = form.substring(1);// remove the "="
+        if(isForm(form)) {
+            form = removeSpaces(form);
+            ans = computeFormP(form);
+        }
+        return ans;
+    }
+
+    private Double computeFunction(int x, int y) {
+        Double ans = null;
+        String func = table[x][y].getData();
+        func = func.substring(1);// remove the "="
+        if(isFunction(func)) {
+            func = removeSpaces(func);
+            ans = computeFunctionP(func);
+        }
+        return ans;
+    }
+
+    private Object computeIfCondition(int x, int y) {
+        Object ans = null;
+        String cond = table[x][y].getData();
+        cond = cond.substring(1);// remove the "="
+        if(isIfCondition(cond)) {
+            cond = removeSpaces(cond);
+            ans = computeIfConditionP(cond);
         }
         return ans;
     }
@@ -533,28 +561,6 @@ public class Ex2Sheet implements Sheet {
         return ans;
     }
 
-    private Double computeFunction(int x, int y) {
-        Double ans = null;
-        String func = table[x][y].getData();
-        func = func.substring(1);// remove the "="
-        if(isFunction(func)) {
-            func = removeSpaces(func);
-            ans = computeFunctionP(func);
-        }
-        return ans;
-    }
-
-    private Object computeIfCondition(int x, int y) {
-        Object ans = null;
-        String func = table[x][y].getData();
-        func = func.substring(1);// remove the "="
-        if(isIfCondition(func)) {
-            func = removeSpaces(func);
-            ans = computeIfConditionP(func);
-        }
-        return ans;
-    }
-
     private Double computeFunctionP(String funcStr) {
         Double ans = null;
         while (canRemoveB(funcStr)) {
@@ -605,41 +611,6 @@ public class Ex2Sheet implements Sheet {
 
                 }
             }
-        }
-        return ans;
-    }
-
-    private Object getConditionValue(String line){
-        int type = checkType(line);
-        if (type == Ex2Utils.TEXT) {
-            return line;
-        }
-        if (type == Ex2Utils.NUMBER) {
-            return getDouble(line);
-        }
-        Object ans = null;
-        line = line.substring(1);
-        if (type == Ex2Utils.FORM) {
-            ans = computeFormP(line);
-        } else if (type == Ex2Utils.FUNC) {
-            ans = computeFunctionP(line);
-        } else if (type == Ex2Utils.IF) {
-            ans = computeIfConditionP(line);
-        }
-        return ans;
-    }
-
-    private Object getValue(String line) {
-        Object ans = null;
-        int type = checkType(line);
-        if (type == Ex2Utils.NUMBER) {
-            ans = getDouble(line);
-        } else if (type == Ex2Utils.FORM) {
-            ans = computeFormP(line);
-        } else if (type == Ex2Utils.FUNC) {
-            ans = computeFunctionP(line);
-        } else if (type == Ex2Utils.IF) {
-            ans = computeIfConditionP(line);
         }
         return ans;
     }
@@ -721,6 +692,43 @@ public class Ex2Sheet implements Sheet {
         }
         return ans;
     }
+
+    private Object getConditionValue(String line){
+        int type = checkType(line);
+        if (type == Ex2Utils.TEXT) {
+            return line;
+        }
+        if (type == Ex2Utils.NUMBER) {
+            return getDouble(line);
+        }
+        Object ans = null;
+        line = line.substring(1);
+        if (type == Ex2Utils.FORM) {
+            ans = computeFormP(line);
+        } else if (type == Ex2Utils.FUNC) {
+            ans = computeFunctionP(line);
+        } else if (type == Ex2Utils.IF) {
+            ans = computeIfConditionP(line);
+        }
+        return ans;
+    }
+
+    private Object getValue(String line) {
+        Object ans = null;
+        int type = checkType(line);
+        if (type == Ex2Utils.NUMBER) {
+            ans = getDouble(line);
+        } else if (type == Ex2Utils.FORM) {
+            ans = computeFormP(line);
+        } else if (type == Ex2Utils.FUNC) {
+            ans = computeFunctionP(line);
+        } else if (type == Ex2Utils.IF) {
+            ans = computeIfConditionP(line);
+        }
+        return ans;
+    }
+
+
 
     private static int opCode(String op){
         int ans =-1;
