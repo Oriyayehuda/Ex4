@@ -27,3 +27,20 @@ The class represents a range of cells from a starting cell to an ending cell.
 It can return all the cell names in that range.
 
 
+<img width="890" alt="readme photo" src="https://github.com/user-attachments/assets/414b139d-6af8-4ce7-9dba-676bab7bd155" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
