@@ -663,7 +663,7 @@ public class Ex2Sheet implements Sheet {
                                     if (leftCond.equals(rightCond)) {
                                         ans = getConditionValue(secondStr);
                                     } else {
-                                        ans = getConditionValue(secondStr);
+                                        ans = getConditionValue(thirdStr);
                                     }
                                 } else if (ind == 3) {
                                     if (leftCond <= rightCond) {
