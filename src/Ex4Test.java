@@ -17,22 +17,28 @@ public class Ex4Test {
     @Test
     public void checkIF() {
         Ex2Sheet excel = new Ex2Sheet(7,7);
+        excel.set(0, 0, "=6");
         excel.set(0, 1, "=if(1<2,1,2)");
         excel.set(0,2, "=if(a1>2, big,small)");
         excel.set(0,4,"=if(3<4,3,4)");
         excel.set(0,3,"=if(4<5,4,5)");
         excel.set(1,4, "=if(a1*a4 != a3/(2-a1), =a4+2, =a1+1)");
         excel.set(1,5,"=if(a1<5,=if(5>1,4,1),5)");
-
+        excel.set(1,6,"=if(1>2,1,=if(5<1,4,=max(a0:a1)))");
+        excel.set(1,3,"=if(1<2,=if(5<1,4,=max(a0:a1))),=if(5<1,4,=if(1<2, 1, =min(a0:a1)))");
         excel.eval();
         String v = excel.value(0, 1);
         String a = excel.value(0, 2);
         String b = excel.value(1, 4);
         String c = excel.value(1, 5);
+        String d = excel.value(1, 6);
+        String e = excel.value(1, 6);
         Assertions.assertEquals(v, "1.0");
         Assertions.assertEquals(a, "small");
         Assertions.assertEquals(b, "5.0");
         Assertions.assertEquals(c, "4.0");
+        Assertions.assertEquals(d, "6.0");
+        Assertions.assertEquals(e, "6.0");
     }
 
     @Test
@@ -111,115 +117,4 @@ public class Ex4Test {
         String b = excel.value(0, 2);
         Assertions.assertEquals(b, "ERR_CYCLE!");
     }
-//    @Test
-//    public void isBasisNumberTest() {
-//        String[] good = {"1", "1b2", "01b2", "123bA", "ABbG", "0bA"};
-//        for(int i=0;i<good.length;i=i+1) {
-//            boolean ok = Ex1.isValidNumber(good[i]);
-//            assertTrue(ok);
-//        }
-//        String[] not_good = {"b2", "2b2", "1G3bG", " BbG", "0bbA", "abB", "!@b2", "A", "1bb2"};
-//        for(int i=0;i<not_good.length;i=i+1) {
-//            boolean not_ok = Ex1.isValidNumber(not_good[i]);
-//            assertFalse(not_ok);
-//        }
-//    }
-//    @Test
-//    public void int2NumberTest() {
-//        int num = 10;
-//        String res = Ex1.int2Number(num, 2);
-//        Assertions.assertEquals("1010b2", res);
-//        res = Ex1.int2Number(num, 17);
-//        Assertions.assertEquals("", res);
-//        res = Ex1.int2Number(0, 2);
-//        Assertions.assertEquals("0b2", res);
-//        res = Ex1.int2Number(-1, 2);
-//        Assertions.assertEquals("", res);
-//        res = Ex1.int2Number(num, 1);
-//        Assertions.assertEquals("", res);
-//    }
-//    @Test
-//    public void maxIndexTest() {
-//        String[] arr = {"2", "3", "1", "2"};
-//        int res = Ex1.maxIndex(arr);
-//        assertEquals(1,res);
-//        String[] arr1 = {"10b2", "100b2", "1000b2"};
-//        res = Ex1.maxIndex(arr1);
-//        assertEquals(2,res);
-//        String[] arr2 = {"1000b3", "100b2", "1000b3"};
-//        res = Ex1.maxIndex(arr2);
-//        assertEquals(0,res);
-//        String[] arr3 = {"", "100b3", "1000b3"};
-//        res = Ex1.maxIndex(arr3);
-//        assertEquals(2,res);
-//        String[] arr4 = {null, "1000b5", "1000b2"};
-//        res = Ex1.maxIndex(arr4);
-//        assertEquals(1,res);
-//        String[] arr5 = {"b5", "1000", "1000b2"};
-//        res = Ex1.maxIndex(arr5);
-//        assertEquals(1,res);
-//    }
-//    @Test
-//    public void number2IntTest(){
-//        String num = "10";
-//        int res = Ex1.number2Int(num);
-//        assertEquals(10,res);
-//        num = "100b2";
-//        res = Ex1.number2Int(num);
-//        assertEquals(4,res);
-//        num = "100bA";
-//        res = Ex1.number2Int(num);
-//        assertEquals(100,res);
-//        num = "100b";
-//        res = Ex1.number2Int(num);
-//        assertEquals(-1,res);
-//        num = "bA";
-//        res = Ex1.number2Int(num);
-//        assertEquals(-1,res);
-//        num = "10AbA";
-//        res = Ex1.number2Int(num);
-//        assertEquals(-1,res);
-//        num = " 10bA";
-//        res = Ex1.number2Int(num);
-//        assertEquals(-1,res);
-//        num = "1FbG";
-//        res = Ex1.number2Int(num);
-//        assertEquals(31,res);
-//        num = "10AbB";
-//        res = Ex1.number2Int(num);
-//        assertEquals(131,res);
-//        num = "100b16";
-//        res = Ex1.number2Int(num);
-//        assertEquals(-1,res);
-//        num = "-1";
-//        res = Ex1.number2Int(num);
-//        assertEquals(-1,res);
-//    }
-//    @Test
-//    public void equalsNumbersTest(){
-//        String num1 = "10";
-//        String num2 = "10bA";
-//        assertTrue(Ex1.equals(num1,num2));
-//        num2 = "1010b2";
-//        assertTrue(Ex1.equals(num1,num2));
-//        num2 = "-1";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = null;
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = "0";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = "100b3";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = "100b17";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = "100b";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = "bA";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num2 = "CbB";
-//        assertFalse(Ex1.equals(num1,num2));
-//        num1 = "31bA";
-//        num2 = "1FbG";
-//        assertTrue(Ex1.equals(num1,num2));
-//    }
 }

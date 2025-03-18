@@ -391,7 +391,7 @@ public class Ex2Sheet implements Sheet {
                 if (str.startsWith("(") && str.endsWith(")")) {
                     str = str.substring(1, str.length() -1);
                     int firstIndex = str.indexOf(",");
-                    int lastIndex = str.lastIndexOf(",");
+                    int lastIndex = getIndexOfComma(str);
                     if (firstIndex != lastIndex && lastIndex != str.length() -1 && firstIndex != 0) {
                         String firstStr = str.substring(0, firstIndex);
                         String secondStr = str.substring(firstIndex + 1, lastIndex);
@@ -447,13 +447,6 @@ public class Ex2Sheet implements Sheet {
         }
         return ans;
     }
-
-    private boolean isConditionValue(String cond) {
-        cond = removeSpaces(cond);
-        return isIfCondition(cond) || isFunction(cond) || isForm(cond);
-    }
-
-
 
     public static ArrayList<Index2D> allCells(String line) {
         ArrayList<Index2D> ans = new ArrayList<Index2D>();
@@ -630,7 +623,7 @@ public class Ex2Sheet implements Sheet {
                 if (str.startsWith("(") && str.endsWith(")")) {
                     str = str.substring(1, str.length() -1);
                     int firstIndex = str.indexOf(",");
-                    int lastIndex = str.lastIndexOf(",");
+                    int lastIndex = getIndexOfComma(str);
                     if (firstIndex != lastIndex && lastIndex != str.length() -1 && firstIndex != 0) {
                         String firstStr = str.substring(0, firstIndex);
                         String secondStr = str.substring(firstIndex + 1, lastIndex);
@@ -712,24 +705,6 @@ public class Ex2Sheet implements Sheet {
         }
         return ans;
     }
-
-    private Object getValue(String line) {
-        Object ans = null;
-        int type = checkType(line);
-        if (type == Ex2Utils.NUMBER) {
-            ans = getDouble(line);
-        } else if (type == Ex2Utils.FORM) {
-            ans = computeFormP(line);
-        } else if (type == Ex2Utils.FUNC) {
-            ans = computeFunctionP(line);
-        } else if (type == Ex2Utils.IF) {
-            ans = computeIfConditionP(line);
-        }
-        return ans;
-    }
-
-
-
     private static int opCode(String op){
         int ans =-1;
         for(int i = 0; i< Ex2Utils.M_OPS.length; i=i+1) {
@@ -773,6 +748,28 @@ public class Ex2Sheet implements Sheet {
         }
         return s;
     }
+    private static int getIndexOfComma(String s) {
+        int bracindex = s.lastIndexOf(')');
+        int commaIndex = s.lastIndexOf(',');
+        int sum = 0;
+        if (bracindex > 0 && commaIndex < bracindex) {
+            sum--;
+            for (int i = bracindex-1; i > 0; i--) {
+                char c = s.charAt(i);
+                if (c == ')') {
+                    sum--;
+                }
+                if (c == '(') {
+                    sum++;
+                }
+                if (sum == 0) {
+                    String temp = s.substring(0, i);
+                    return temp.lastIndexOf(',');
+                }
+            }
+        }
+        return commaIndex;
+    }
     private static boolean canRemoveB(String s) {
         boolean ans = false;
         if (s!=null && s.startsWith("(") && s.endsWith(")")) {
@@ -794,16 +791,6 @@ public class Ex2Sheet implements Sheet {
         return ans;
     }
     private static int op(String line, String[] words, int start) {
-        int ans = -1;
-        line = line.substring(start);
-        for(int i = 0; i<words.length&&ans==-1; i++) {
-            if(line.startsWith(words[i])) {
-                ans=i;
-            }
-        }
-        return ans;
-    }
-    private static int func(String line, String[] words, int start) {
         int ans = -1;
         line = line.substring(start);
         for(int i = 0; i<words.length&&ans==-1; i++) {
